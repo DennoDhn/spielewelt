@@ -1,0 +1,12 @@
+{
+  "name": "Kleine Wunderwelt",
+  "short_name": "Wunderwelt",
+  "description": "Interaktive Spielwelt für kleine Kinder",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#b7ebf1",
+  "theme_color": "#8fdedb",
+  "lang": "de",
+  "icons": []
+}
