@@ -1,19 +1,82 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#c7e9ef"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Tier-Memory"><meta name="description" content="Ein liebevolles, werbefreies Tier-Memory für Kinder"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css?v=4"><title>Tier-Memory</title></head><body><main id="app"><header class="toolbar"><div class="brand"><span aria-hidden="true">✿</span> Tier-Memory</div><div class="toolbar-actions"><button id="restart" class="icon-button" aria-label="Neue Runde" title="Neue Runde">↻</button><button id="settings" class="icon-button" aria-label="Einstellungen" aria-expanded="false" title="Einstellungen">⚙</button></div></header><section class="play-area" aria-label="Memory-Spiel"><div id="board" class="board" aria-label="Memory-Karten"><p class="loading-message" id="loading-message">Memory wird geladen …</p></div></section><footer class="footer"><div id="progress" class="progress" aria-live="polite"></div><div id="status" class="sr-only" aria-live="polite"></div></footer><section id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden><div class="settings-sheet"><div class="settings-head"><h2 id="settings-title">Für die Großen</h2><button id="close-settings" class="icon-button" aria-label="Einstellungen schließen">✕</button></div><p>Wie viele Tierpaare?</p><div id="levels" class="level-grid"></div><label class="sound-setting"><span>Klänge</span><input id="sound" type="checkbox" checked></label></div></section><section id="celebration" class="celebration" hidden aria-live="polite"><div class="celebrate-inner"><div class="celebrate-art" aria-hidden="true">🌟</div><h2>Super gemacht!</h2><button id="play-again" class="again">Noch mal spielen ↻</button></div></section></main><script>
-(function(){
-  if(!('serviceWorker' in navigator))return;
-  try{if(localStorage.getItem('memory-cache-migration-v4')==='done')return;localStorage.setItem('memory-cache-migration-v4','done')}catch{}
-  navigator.serviceWorker.getRegistrations().then(function(registrations){
-    return Promise.all(registrations.map(function(r){return r.unregister()}));
-  }).then(function(){
-    if('caches' in window)return caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k.indexOf('spielewelt')===0||k.indexOf('tier-memory')===0}).map(function(k){return caches.delete(k)}))});
-  }).catch(function(){});
-})();
-window.addEventListener('DOMContentLoaded',function(){
-  setTimeout(function(){
-    var board=document.getElementById('board');
-    if(board&&!board.querySelector('.card')){
-      board.innerHTML='<div class="loading-message" role="alert">Das Memory konnte nicht starten. Bitte die Seite neu laden.</div>';
-    }
-  },1800);
-});
-</script><script>window.addEventListener("error",function(){var e=document.getElementById("loading-message");if(e)e.textContent="Das Spiel konnte nicht geladen werden. Bitte Seite neu laden."});</script><script src="./app.js?v=4" defer></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Game / 神経衰弱</title>
+  <meta name="description" content="Memory card matching game with 4 difficulty levels and 5 themes. 神経衰弱ゲーム。" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Confetti canvas (full-screen overlay, pointer-events:none) -->
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- Win overlay -->
+  <div id="win-overlay" class="win-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="win-title">
+    <div class="win-box">
+      <h2 id="win-title" data-i18n="win">You Win! 🎉</h2>
+      <p id="win-msg"></p>
+      <button id="win-play-again" data-i18n="reset">New Game</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-title">
+        <h1 data-i18n="title">Memory Game</h1>
+        <span class="subtitle" data-i18n="subtitle">Card Matching</span>
+      </div>
+      <div class="header-controls">
+        <button id="dark-btn" class="icon-btn" aria-label="Toggle dark mode">Dark Mode</button>
+        <button id="lang-btn" class="icon-btn" aria-label="Switch language">日本語</button>
+      </div>
+    </header>
+
+    <!-- Controls bar -->
+    <div class="controls">
+      <div class="control-group">
+        <label for="diff-select" data-i18n="difficulty">Difficulty</label>
+        <select id="diff-select">
+          <option value="easy" data-i18n="easy">Easy</option>
+          <option value="medium" selected data-i18n="medium">Medium</option>
+          <option value="hard" data-i18n="hard">Hard</option>
+          <option value="expert" data-i18n="expert">Expert</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="theme-select" data-i18n="theme">Theme</label>
+        <select id="theme-select">
+          <!-- Options injected by main.js -->
+        </select>
+      </div>
+      <button id="reset-btn" class="reset-btn" data-i18n="reset">New Game</button>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats" role="status" aria-live="polite">
+      <div class="stat">
+        <span class="stat-label" data-i18n="moves">Moves</span>
+        <span class="stat-value" id="moves">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label" data-i18n="time">Time</span>
+        <span class="stat-value" id="time">00:00</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label" data-i18n="bestMoves">Best Moves</span>
+        <span class="stat-value" id="best-moves">--</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label" data-i18n="bestTime">Best Time</span>
+        <span class="stat-value" id="best-time">--</span>
+      </div>
+    </div>
+
+    <!-- Card grid -->
+    <main id="grid" class="grid" role="main" aria-label="Card grid"></main>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
