@@ -1,0 +1,23 @@
+name: Kinder-Memory Browsercheck
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/kids-memory-rebuild]
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: node --check kids.js
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test smartphone and iPad
+        run: node tests/kids-smoke.cjs
