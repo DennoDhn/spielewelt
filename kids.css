@@ -9,3 +9,7 @@
 #won[open] .celebrate{animation:celebrate-bounce .7s ease-out}
 @keyframes celebrate-bounce{0%{transform:translateY(16px);opacity:0}65%{transform:translateY(-8px);opacity:1}100%{transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.tile.matched .picture,#won[open] .celebrate{animation:none}}
+
+/* The memory game is a fixed canvas: taps must not pan, pinch-zoom or double-tap zoom. */
+html,body,.game,.board,.tile,dialog,button{touch-action:none;-ms-touch-action:none}
+html,body{overscroll-behavior:none;-webkit-text-size-adjust:100%}
