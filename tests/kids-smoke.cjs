@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 (async()=>{
@@ -6,7 +6,8 @@ const { spawn } = require('node:child_process');
  let browser;
  try{
   await new Promise(r=>setTimeout(r,1200));
-  browser=await chromium.launch({headless:true});
+  for(const engine of [chromium,webkit]){
+  browser=await engine.launch({headless:true});
   for(const size of [{width:390,height:844},{width:820,height:1180},{width:1180,height:820}]){
    const page=await browser.newPage({viewport:size,deviceScaleFactor:2,hasTouch:true,isMobile:size.width===390});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -38,6 +39,23 @@ const { spawn } = require('node:child_process');
    assert.deepEqual(errors,[],'no JS exceptions');
    await page.close();
   }
+  await browser.close();browser=null;
+  }
+  browser=await chromium.launch({headless:true});
+  const context=await browser.newContext({serviceWorkers:'allow'});
+  const offlinePage=await context.newPage();
+  await offlinePage.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
+  await offlinePage.evaluate(()=>navigator.serviceWorker.ready);
+  await offlinePage.waitForTimeout(600);
+  await context.setOffline(true);
+  await offlinePage.reload({waitUntil:'domcontentloaded'});
+  assert.equal(await offlinePage.locator('.tile').count(),4,'PWA works offline');
+  await context.close();
+  const blocked=await browser.newPage();
+  await blocked.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new Error('storage blocked')}})});
+  await blocked.goto('http://127.0.0.1:8765/');
+  assert.equal(await blocked.locator('.tile').count(),4,'game works without storage');
+  await blocked.close();
   console.log('All child memory smoke checks passed');
  }finally{await browser?.close();server.kill()}
 })().catch(e=>{console.error(e);process.exit(1)});
