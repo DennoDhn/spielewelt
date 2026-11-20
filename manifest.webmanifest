@@ -1,0 +1,18 @@
+{
+  "name": "Tier-Memory – Spielewelt",
+  "short_name": "Tier-Memory",
+  "description": "Tier-Memory für kleine Kinder, auch ohne Internet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff7e9",
+  "theme_color": "#f7e8cb",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
