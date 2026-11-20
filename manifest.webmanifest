@@ -1,12 +1,12 @@
 {
-  "name": "Kleine Spielewelt",
-  "short_name": "Spielewelt",
-  "description": "Werbefreie Lern- und Entdeckerspiele für Kinder",
+  "name": "Tier-Memory",
+  "short_name": "Memory",
+  "description": "Ein werbefreies Tier-Memory für Kinder",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#b5edf3",
-  "theme_color": "#89d9e9",
+  "background_color": "#d5f0f1",
+  "theme_color": "#c7e9ef",
   "lang": "de",
   "icons": [
     {
