@@ -8,7 +8,7 @@ const { spawn } = require('node:child_process');
   await new Promise(r=>setTimeout(r,1200));
   for(const engine of [chromium,webkit]){
   browser=await engine.launch({headless:true});
-  for(const size of [{width:390,height:844},{width:820,height:1180},{width:1180,height:820}]){
+  for(const size of [{width:390,height:844},{width:820,height:1180},{width:1180,height:820},{width:375,height:667},{width:667,height:375}]){
    const page=await browser.newPage({viewport:size,deviceScaleFactor:2,hasTouch:true,isMobile:size.width===390});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
@@ -18,6 +18,7 @@ const { spawn } = require('node:child_process');
    await page.locator('#settings').click();
    await page.locator('[data-pairs="6"]').click();
    assert.equal(await page.locator('.tile').count(),12,'six pairs');
+   assert.equal(await page.evaluate(()=>[...document.querySelectorAll('.tile')].every(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight})),true,'all twelve cards fit viewport');
    await page.reload();
    assert.equal(await page.locator('.tile').count(),12,'settings persisted');
    await page.locator('#settings').click();
