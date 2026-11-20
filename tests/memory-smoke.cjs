@@ -12,7 +12,7 @@ const server=spawn('python3',['-m','http.server','8765','--bind','127.0.0.1'],{s
  await page.reload();assert.equal(await page.locator('.card').count(),12,'Difficulty persists');
  await page.locator('#settings').click();await page.locator('#levels [data-n="2"]').click();
  // Read accessible emoji from the rendered cards and click each matching pair.
- const cards=page.locator('.card');const labels=await cards.locator('.card-front').allTextContents();const seen=new Map();
+ const cards=page.locator('.card');const labels=await cards.locator('.animal-illustration').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')));const seen=new Map();
  for(let i=0;i<labels.length;i++){const e=labels[i];if(!seen.has(e))seen.set(e,[]);seen.get(e).push(i)}
  for(const positions of seen.values()){await cards.nth(positions[0]).click();await cards.nth(positions[1]).click()}
  assert.equal(await page.locator('.card.is-matched').count(),4,'All cards matched');
