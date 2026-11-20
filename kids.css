@@ -3,3 +3,9 @@
 @media(max-width:600px){.game header,.game footer{height:56px}.board{gap:8px}.board[data-pairs="3"]{grid-template-columns:repeat(2,minmax(0,min(38vw,170px)));grid-template-rows:repeat(3,minmax(0,min(23dvh,180px)))}.board[data-pairs="4"]{grid-template-columns:repeat(2,minmax(0,min(38vw,170px)));grid-template-rows:repeat(4,minmax(0,min(17dvh,150px)))}.board[data-pairs="6"]{grid-template-columns:repeat(3,minmax(0,min(27vw,145px)));grid-template-rows:repeat(4,minmax(0,min(16dvh,140px)))}}
 @media(max-height:520px){.board[data-pairs="2"]{grid-template-rows:repeat(2,minmax(0,30dvh))}.board[data-pairs="3"],.board[data-pairs="4"]{grid-template-rows:repeat(2,minmax(0,29dvh))}.board[data-pairs="6"]{grid-template-rows:repeat(3,minmax(0,19dvh))}}
 @media(prefers-reduced-motion:reduce){.tile-inner{transition:none}}
+
+.tile.matched .picture{animation:matched-pop .36s ease-out}
+@keyframes matched-pop{0%{scale:1}45%{scale:1.055}100%{scale:1}}
+#won[open] .celebrate{animation:celebrate-bounce .7s ease-out}
+@keyframes celebrate-bounce{0%{transform:translateY(16px);opacity:0}65%{transform:translateY(-8px);opacity:1}100%{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.tile.matched .picture,#won[open] .celebrate{animation:none}}
