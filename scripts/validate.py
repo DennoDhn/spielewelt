@@ -18,4 +18,8 @@ assert manifest['start_url']=='./'
 assert manifest['display']=='standalone'
 assert manifest['icons']
 assert 'icon-192.png' not in html
+assert 'Noch einmal spielen' in js
+assert 'if(busy)return' in js
+assert 'bubble-drift' in css
+assert "request.mode==='navigate'" in sw
 print('Static PWA and game checks passed')
