@@ -1,12 +1,19 @@
 {
-  "name": "Kleine Wunderwelt",
-  "short_name": "Wunderwelt",
-  "description": "Interaktive Spielwelt für kleine Kinder",
+  "name": "Kleine Spielewelt",
+  "short_name": "Spielewelt",
+  "description": "Werbefreie Lern- und Entdeckerspiele für Kinder",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#b7ebf1",
-  "theme_color": "#8fdedb",
+  "background_color": "#b5edf3",
+  "theme_color": "#89d9e9",
   "lang": "de",
-  "icons": []
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
