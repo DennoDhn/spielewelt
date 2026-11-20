@@ -1,102 +1,30 @@
 'use strict';
-const main=document.querySelector('#main'),back=document.querySelector('#back'),parents=document.querySelector('#parents');
-const worlds=[['zoo','🦁','Tierpark','#ffe3aa'],['puzzle','🧩','Tierpuzzle','#d7f6e6'],['hide','🔎','Versteckspiel','#e9e2ff'],['farm','🐮','Tierbauernhof','#ffedb8'],['music','🎵','Xylophon','#e9d9ff'],['memory','🧠','Kindermemory','#e1f2ff'],['shapes','🔷','Formen finden','#f2dcff'],['colors','🎨','Farben entdecken','#ffe1eb'],['bubbles','🫧','Seifenblasen','#d3f8f8'],['feed','🥕','Tiere füttern','#f9e9c4'],['garden','🌻','Entdeckerwiese','#e1f5c8'],['road','🚗','Fahrzeugwelt','#d6eaff'],['room','🧸','Kinderzimmer','#ffe0ce']];
-const scenes={farm:{title:'Tierbauernhof',hint:'Tippe auf die Tiere!',items:[['🐮','Kuh','Muh!',165],['🐶','Hund','Wau wau!',260],['🐱','Katze','Miau!',430],['🐷','Schwein','Oink!',220],['🐴','Pferd','Wieher!',320],['🐥','Küken','Piep piep!',780]]},garden:{title:'Entdeckerwiese',hint:'Was findest du auf der Wiese?',items:[['🌻','Blume','Eine schöne Blume!',470],['🦋','Schmetterling','Flatter, flatter!',680],['🐞','Marienkäfer','Hallo, Käfer!',580],['🌈','Regenbogen','So viele Farben!',720],['☁️','Wolke','Eine Wolke!',350],['🐝','Biene','Summ, summ!',520]]},road:{title:'Fahrzeugwelt',hint:'Tippe auf ein Fahrzeug!',items:[['🚗','Auto','Brumm, brumm!',145],['🚜','Traktor','Tuck, tuck!',115],['🚌','Bus','Tuuut!',200],['🚒','Feuerwehr','Tatü tata!',520],['🚲','Fahrrad','Klingeling!',800],['🚂','Zug','Tschu-tschu!',250]]},room:{title:'Kinderzimmer',hint:'Was möchtest du entdecken?',items:[['🧸','Teddy','Kuschelzeit!',330],['💡','Lampe','Licht an!',540],['🍎','Apfel','Lecker!',440],['🛏️','Bett','Gute Nacht!',250],['🚪','Tür','Klopf, klopf!',180],['🎁','Geschenk','Überraschung!',610]]}};
-let current='home',ctx=null,cleanup=()=>{},settings={sound:true,volume:.35};try{Object.assign(settings,JSON.parse(localStorage.getItem('spielewelt-settings')||'{}'))}catch{}
-const save=()=>{try{localStorage.setItem('spielewelt-settings',JSON.stringify(settings))}catch{}};
-function tone(freq,duration=.22,type='sine',delay=0){if(!settings.sound||!settings.volume)return;try{ctx??=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();const t=ctx.currentTime+delay,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(Math.max(40,freq*.94),t+duration);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.001,settings.volume*.23),t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+duration+.03)}catch(e){console.warn('Audio unavailable',e)}}
-function success(){tone(523,.18);tone(659,.2,'sine',.16);tone(784,.25,'sine',.32)}
-function spark(x=innerWidth/2,y=innerHeight/2){for(let i=0;i<3;i++){const el=document.createElement('span');el.className='spark';el.textContent=['✦','★','✧'][i];el.style.left=x+(i-1)*30+'px';el.style.top=y+'px';document.body.append(el);setTimeout(()=>el.remove(),850)}}
-function shell(title,hint,theme=''){main.innerHTML='<section class="stage '+theme+'"><h2>'+title+'</h2><p class="hint">'+hint+'</p><div id="play"></div><div class="status" id="status" aria-live="polite"></div></section>';return [document.querySelector('#play'),document.querySelector('#status')]}
-function item(emoji,name,fn){const b=document.createElement('button');b.className='item';b.setAttribute('aria-label',name);const art=document.createElement('span');art.className='art';art.textContent=emoji;const label=document.createElement('span');label.textContent=name;b.append(art,label);b.addEventListener('click',()=>{b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');fn(b)});return b}
-function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
-function show(page){cleanup();cleanup=()=>{};current=page;document.body.classList.toggle('memory-mode',page==='memory');back.hidden=page==='home';parents.hidden=page==='settings'||page==='memory';if(page==='home'){main.innerHTML='<p class="hint">Was möchtest du heute spielen?</p><div class="grid">'+worlds.map(([id,emoji,name,bg])=>'<button class="tile" style="--bg:'+bg+'" data-page="'+id+'"><span class="art" aria-hidden="true">'+emoji+'</span>'+name+'</button>').join('')+'</div><p class="footer">Werbefrei · Ohne Zeitdruck · Offline spielbar nach dem ersten Laden</p>';main.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.page)));return}
-if(page==='settings'){main.innerHTML='<section class="settings"><h2>Elternbereich</h2><p>Einstellungen werden nur auf diesem Gerät gespeichert.</p><label>Ton <input id="sound" type="checkbox" '+(settings.sound?'checked':'')+'></label><label>Lautstärke <input id="volume" type="range" min="0" max="1" step=".05" value="'+settings.volume+'"></label><button class="action" id="done">Fertig</button></section>';document.querySelector('#sound').onchange=e=>{settings.sound=e.target.checked;save()};document.querySelector('#volume').oninput=e=>{settings.volume=Number(e.target.value);save()};document.querySelector('#done').onclick=()=>show('home');return}
-if(page==='zoo'){zoo();return}if(page==='puzzle'){puzzle();return}if(page==='hide'){hideSeek();return}if(page==='memory'){memory();return}if(page==='music'){music();return}if(page==='shapes'||page==='colors'){matching(page);return}if(page==='bubbles'){bubbles();return}if(page==='feed'){feed();return}
-const scene=scenes[page];if(!scene)return show('home');const [play,status]=shell(scene.title,scene.hint);play.className='items';scene.items.forEach(([emoji,name,message,freq])=>play.append(item(emoji,name,b=>{status.textContent=message;tone(freq,.22,'triangle');tone(freq*1.3,.2,'sine',.14);const r=b.getBoundingClientRect();spark(r.x+r.width/2,r.y+r.height/2)})))}
-function music(){const [play,status]=shell('Musikgarten','Spiele auf den bunten Klangstäben!','purple');play.className='keys';const notes=[261.63,293.66,329.63,349.23,392,440,493.88,523.25],colors=['#fa7d7d','#ffaf66','#f8db69','#a5e58a','#75d7c6','#7dbbf4','#b5a2ee','#ef9ed4'];notes.forEach((freq,i)=>{const b=document.createElement('button');b.className='key';b.style.setProperty('--color',colors[i]);b.setAttribute('aria-label','Klangstab '+(i+1));b.onpointerdown=e=>{e.preventDefault();tone(freq,.65);tone(freq*2,.19,'triangle');b.classList.add('pressed');spark(e.clientX,e.clientY)};['pointerup','pointercancel','pointerleave'].forEach(evt=>b.addEventListener(evt,()=>b.classList.remove('pressed')));play.append(b)});status.textContent='Deine eigene Melodie!'}
-function memory(){
- const [play,status]=shell('Kindermemory','Finde zwei gleiche Tiere!','purple');
- const wrap=document.createElement('div');wrap.className='memory-game';play.append(wrap);
- const board=document.createElement('div');board.className='memory memory-board';wrap.append(board);
- const footer=document.createElement('div');footer.className='memory-footer';wrap.append(footer);
- const again=document.createElement('button');again.className='memory-restart';again.textContent='↻ Noch einmal';again.setAttribute('aria-label','Memory neu starten');footer.append(again);
- const gear=document.createElement('button');gear.className='memory-gear';gear.textContent='⚙';gear.setAttribute('aria-label','Memory Einstellungen');gear.setAttribute('aria-expanded','false');footer.append(gear);
- const panel=document.createElement('div');panel.className='memory-options';panel.hidden=true;panel.innerHTML='<h3>Wie viele Paare?</h3><div class="memory-levels"></div>';wrap.append(panel);
- const choices=panel.querySelector('.memory-levels');
- let level=2,open=[],matched=0,locked=false,timeout=null;
- try{const stored=Number(localStorage.getItem('spielewelt-memory-pairs'));if([2,3,4,6].includes(stored))level=stored}catch{}
- const symbols=['🐶','🐱','🐮','🐸','🦋','🐻'];
- function closeOptions(){panel.hidden=true;gear.setAttribute('aria-expanded','false')}
- function reset(n){
-  if(timeout)clearTimeout(timeout);timeout=null;open=[];matched=0;locked=false;level=n;
-  try{localStorage.setItem('spielewelt-memory-pairs',String(n))}catch{}
-  choices.querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',Number(b.dataset.n)===n);b.setAttribute('aria-pressed',String(Number(b.dataset.n)===n))});
-  board.style.setProperty('--cols',n===2?2:n===3?3:4);
-  board.dataset.pairs=String(n);board.replaceChildren();status.textContent='Finde zwei gleiche Tiere!';
-  const cards=shuffle(symbols.slice(0,n).flatMap((emoji,id)=>[{id,emoji},{id,emoji}]));
-  cards.forEach(c=>{
-   const card=document.createElement('button');card.className='memory-card';card.textContent='✦';card.setAttribute('aria-label','Verdeckte Karte');card.setAttribute('aria-pressed','false');
-   card.onclick=()=>{
-    if(locked||card.dataset.done||open.some(x=>x.card===card))return;
-    card.textContent=c.emoji;card.classList.add('flipped');card.setAttribute('aria-label',c.emoji);card.setAttribute('aria-pressed','true');tone(440,.12);open.push({card,id:c.id});
-    if(open.length!==2)return;
-    if(open[0].id===open[1].id){
-     open.forEach(x=>{x.card.dataset.done='1';x.card.classList.add('matched');x.card.disabled=true});
-     matched++;success();spark();open=[];status.textContent=matched===n?'Alle Tiere gefunden! Super!':'Ein Paar gefunden!';
-     if(matched===n){board.classList.add('completed');setTimeout(()=>board.classList.remove('completed'),700)}
-    }else{
-     locked=true;status.textContent='Probier es noch einmal!';
-     timeout=setTimeout(()=>{open.forEach(x=>{x.card.textContent='✦';x.card.classList.remove('flipped');x.card.setAttribute('aria-label','Verdeckte Karte');x.card.setAttribute('aria-pressed','false')});open=[];locked=false;timeout=null},1250);
-    }
-   };board.append(card);
-  });
- }
- [[2,'2 Paare'],[3,'3 Paare'],[4,'4 Paare'],[6,'6 Paare']].forEach(([n,label])=>{
-  const b=document.createElement('button');b.textContent=label;b.dataset.n=n;b.onclick=()=>{reset(n);closeOptions()};choices.append(b);
- });
- gear.onclick=()=>{panel.hidden=!panel.hidden;gear.setAttribute('aria-expanded',String(!panel.hidden))};
- again.onclick=()=>{reset(level);closeOptions()};reset(level);
- cleanup=()=>{if(timeout)clearTimeout(timeout)};
+const board=document.querySelector('#board'),progress=document.querySelector('#progress'),status=document.querySelector('#status');
+const panel=document.querySelector('#settings-panel'),celebration=document.querySelector('#celebration');
+const settingsButton=document.querySelector('#settings'),closeButton=document.querySelector('#close-settings'),levels=document.querySelector('#levels'),soundInput=document.querySelector('#sound');
+const animals=['🐶','🐱','🐮','🐷','🐰','🐥'];
+let pairs=2,sound=true,first=null,second=null,locked=false,matched=0,timer=null,winTimer=null,audio=null;
+try{const saved=Number(localStorage.getItem('tier-memory-pairs'));if([2,3,4,6].includes(saved))pairs=saved;sound=localStorage.getItem('tier-memory-sound')!=='false'}catch{}
+soundInput.checked=sound;
+function shuffle(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function note(freq=520,duration=.16){if(!sound)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const t=audio.currentTime,o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+duration+.02)}catch{}}
+function melody(){note(523);setTimeout(()=>note(659),110);setTimeout(()=>note(784),220)}
+function clearTimers(){if(timer!==null)clearTimeout(timer);if(winTimer!==null)clearTimeout(winTimer);timer=winTimer=null}
+function updateProgress(){progress.replaceChildren();for(let i=0;i<pairs;i++){const dot=document.createElement('span');dot.className='progress-dot'+(i<matched?' done':'');dot.setAttribute('aria-hidden','true');progress.append(dot)}}
+function newGame(){clearTimers();first=second=null;locked=false;matched=0;celebration.hidden=true;board.replaceChildren();board.dataset.pairs=String(pairs);board.style.setProperty('--cols',String(pairs===2?2:pairs===3?3:4));status.textContent='Finde zwei gleiche Tiere';updateProgress();
+ const cards=shuffle(animals.slice(0,pairs).flatMap((emoji,id)=>[{emoji,id},{emoji,id}]));
+ cards.forEach(({emoji,id})=>{const button=document.createElement('button');button.className='card';button.setAttribute('aria-label','Verdeckte Karte');button.setAttribute('aria-pressed','false');button.innerHTML='<span class="card-inner"><span class="card-face card-back" aria-hidden="true"></span><span class="card-face card-front" aria-hidden="true"></span></span>';button.querySelector('.card-front').textContent=emoji;button.addEventListener('click',()=>flip(button,id,emoji));board.append(button)});
 }
-function matching(mode){const isShape=mode==='shapes';const data=isShape?[['●','Kreis','#f47676'],['■','Quadrat','#69a8ee'],['▲','Dreieck','#f0bc55'],['★','Stern','#a38aee']]:[['●','Rot','#f47676'],['●','Blau','#69a8ee'],['●','Gelb','#f0d355'],['●','Grün','#6cc981']];const [play,status]=shell(isShape?'Formen finden':'Farben entdecken','Tippe auf die passende Antwort!');const target=document.createElement('div');target.className='match-target';play.append(target);const options=document.createElement('div');options.className='items';play.append(options);let round=0;function next(){const chosen=data[round%data.length];target.textContent=chosen[0];target.style.color=chosen[2];status.textContent='Finde '+chosen[1]+'!';options.replaceChildren();shuffle(data).forEach(d=>{const b=document.createElement('button');b.className='item';b.setAttribute('aria-label',d[1]);b.innerHTML='<span class="shape" style="color:'+d[2]+'">'+d[0]+'</span><span>'+d[1]+'</span>';b.onclick=()=>{if(d===chosen){success();spark();round++;next()}else{tone(230,.16,'triangle');status.textContent='Probier es noch einmal: '+chosen[1]}};options.append(b)})}next()}
-function bubbles(){const [play,status]=shell('Seifenblasen','Tippe auf die schwebenden Blasen!');play.className='bubble-area';let count=0;function spawn(){if(current!=='bubbles')return;if(play.childElementCount>=9)return;const b=document.createElement('button');b.className='bubble';b.setAttribute('aria-label','Seifenblase platzen lassen');const size=65+Math.random()*45;b.style.width=size+'px';b.style.height=size+'px';b.style.left=Math.random()*Math.max(0,play.clientWidth-size)+'px';b.style.top=Math.random()*Math.max(0,play.clientHeight-size)+'px';b.style.animation='bubble-drift '+(3+Math.random()*3)+'s ease-in-out infinite alternate';b.onclick=()=>{const r=b.getBoundingClientRect();b.remove();tone(500+Math.random()*350,.12);spark(r.x+r.width/2,r.y+r.height/2);count++;status.textContent=count+' Blasen geplatzt!';spawn()};play.append(b)}for(let i=0;i<7;i++)spawn();status.textContent='Plopp!'}
-function feed(){const [play,status]=shell('Tiere füttern','Gib dem Tier sein Lieblingsfutter!');play.className='items';const pairs=[['🐰','Häschen','🥕','Karotte'],['🐵','Affe','🍌','Banane'],['🐮','Kuh','🌿','Gras'],['🐿️','Eichhörnchen','🌰','Nuss']];let round=0,selected=false,busy=false,timer=null;function next(){busy=false;const [animal,name,food,foodName]=pairs[round%pairs.length];play.replaceChildren();status.textContent='Tippe auf '+foodName+' und dann auf '+name+'!';play.append(item(animal,name,()=>{if(busy)return;if(!selected){status.textContent='Erst das Futter auswählen!';tone(230,.15);return}busy=true;success();spark();selected=false;round++;status.textContent='Lecker!';timer=setTimeout(()=>{if(current==='feed')next()},650)}));play.append(item(food,foodName,()=>{if(busy)return;selected=true;status.textContent='Jetzt '+name+' antippen!';tone(480,.15)}))}next();cleanup=()=>{if(timer)clearTimeout(timer)}}
-
-function zoo(){const [play,status]=shell('Unser Tierpark','Entdecke die Tiere und ihre Überraschungen!');play.className='zoo-grid';play.setAttribute('aria-label','Interaktiver Tierpark');const animals=[['🦁','Löwe',180],['🐘','Elefant',115],['🦒','Giraffe',360],['🐒','Affe',520],['🐧','Pinguin',460],['🦓','Zebra',310],['🐢','Schildkröte',260],['🦜','Papagei',650]];animals.forEach(([emoji,name,freq],i)=>{const b=item(emoji,name,()=>{tone(freq,.25,'triangle');tone(freq*1.25,.2,'sine',.15);status.textContent=name+' sagt Hallo!';const art=b.querySelector('.art');art.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-22px) rotate(-9deg)'},{transform:'translateY(0) rotate(0)'}],{duration:650,easing:'ease-in-out'});const r=b.getBoundingClientRect();spark(r.x+r.width/2,r.y+r.height/2)});b.style.setProperty('--zoo-hue',String(i*38));b.classList.add('zoo-animal');play.append(b)});status.textContent='Tippe ein Tier an!'}
-function puzzle(){const [play,status]=shell('Tierpuzzle','Ziehe die Teile auf die passenden Plätze!');const animals=['🐶','🐱','🐮','🐸','🦊','🐼'];let round=0,placed=0,drag=null;const target=document.createElement('div');target.className='puzzle-targets';const tray=document.createElement('div');tray.className='puzzle-tray';play.append(target,tray);function start(){placed=0;play.querySelectorAll('.action').forEach(b=>b.remove());target.replaceChildren();tray.replaceChildren();const chosen=shuffle(animals).slice(0,3);const slots=new Map();chosen.forEach((emoji,i)=>{const slot=document.createElement('button');slot.className='puzzle-slot';slot.textContent='?';slot.setAttribute('aria-label','Platz für '+emoji);slot.dataset.id=emoji;slot.onclick=()=>{if(drag)place(slot,drag)};target.append(slot);slots.set(emoji,slot)});shuffle(chosen).forEach(emoji=>{const piece=document.createElement('button');piece.className='puzzle-piece';piece.textContent=emoji;piece.setAttribute('aria-label','Puzzleteil '+emoji);piece.draggable=true;piece.addEventListener('dragstart',e=>{drag=emoji;e.dataTransfer?.setData('text/plain',emoji)});piece.onclick=()=>{drag=emoji;status.textContent='Tippe jetzt auf das passende Fragezeichen!'};piece.addEventListener('pointerdown',e=>{drag=emoji;piece.setPointerCapture(e.pointerId);piece.classList.add('dragging')});piece.addEventListener('pointermove',e=>{if(!piece.hasPointerCapture(e.pointerId))return;const rect=tray.getBoundingClientRect();piece.style.transform='translate('+(e.clientX-(rect.left+rect.width/2))*.22+'px,'+(e.clientY-(rect.top+rect.height/2))*.22+'px)'});piece.addEventListener('pointerup',e=>{piece.releasePointerCapture(e.pointerId);piece.classList.remove('dragging');piece.style.transform='';const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('.puzzle-slot');if(under)place(under,emoji)});piece.addEventListener('pointercancel',()=>{piece.classList.remove('dragging');piece.style.transform='' });tray.append(piece)});target.querySelectorAll('.puzzle-slot').forEach(slot=>{slot.addEventListener('dragover',e=>e.preventDefault());slot.addEventListener('drop',e=>{e.preventDefault();place(slot,e.dataTransfer?.getData('text/plain')||drag)})});status.textContent='Wähle ein Tier und finde seinen Platz!';function place(slot,emoji){if(slot.dataset.done||!emoji)return;if(slot.dataset.id!==emoji){tone(240,.14);status.textContent='Versuch einen anderen Platz!';return}slot.textContent=emoji;slot.dataset.done='1';slot.classList.add('solved');const piece=[...tray.children].find(p=>p.textContent===emoji);if(piece)piece.remove();drag=null;placed++;success();if(placed===3){status.textContent='Geschafft! Ein neues Puzzle kommt!';const btn=document.createElement('button');btn.className='action';btn.textContent='Neues Puzzle';btn.onclick=()=>{btn.remove();start()};play.append(btn)}else status.textContent='Super! Weiter so!'}}start()}
-function hideSeek(){
- const [play,status]=shell('Versteckspiel','Tippe auf die Verstecke!');
- play.className='hide-scene hide-world';status.classList.add('visually-hidden');
- const animals=[['🐥','Küken'],['🐷','Schwein'],['🐰','Hase'],['🐮','Kuh'],['🐶','Hund']];
- const spots=[['tree','🌳','Baum'],['barn','🏠','Stall'],['flowers','🌼','Blumen'],['bush','🌿','Busch'],['hay','🌾','Heu'],['basket','🧺','Korb']];
- const top=document.createElement('div');top.className='hide-target';play.append(top);
- const scene=document.createElement('div');scene.className='hide-landscape';play.append(scene);
- const bottom=document.createElement('div');bottom.className='hide-controls';play.append(bottom);
- const replay=document.createElement('button');replay.className='hide-replay';replay.textContent='↻';replay.setAttribute('aria-label','Neues Versteckspiel');bottom.append(replay);
- let round=0,found=false,timer=null;
- function start(){
-  if(timer)clearTimeout(timer);found=false;scene.replaceChildren();
-  const [animal,name]=animals[round%animals.length],index=Math.floor(Math.random()*spots.length);
-  top.replaceChildren();const portrait=document.createElement('span');portrait.textContent=animal;portrait.setAttribute('aria-label','Suche '+name);top.append(portrait);
-  status.textContent='Suche '+name;
-  spots.forEach(([kind,emoji,label],i)=>{
-   const spot=document.createElement('button');spot.className='hide-object hide-'+kind;
-   spot.setAttribute('aria-label',label+' durchsuchen');
-   const art=document.createElement('span');art.className='hide-object-art';art.textContent=emoji;art.setAttribute('aria-hidden','true');spot.append(art);
-   spot.onclick=()=>{
-    if(found||spot.classList.contains('checked'))return;
-    if(i===index){
-     found=true;spot.classList.add('found');art.textContent=animal;portrait.textContent='★';success();
-     const rect=spot.getBoundingClientRect();spark(rect.x+rect.width/2,rect.y+rect.height/2);
-     status.textContent=name+' gefunden!';
-     timer=setTimeout(()=>{round++;start()},1800);
-    }else{spot.classList.add('checked');tone(300,.12,'sine');status.textContent='Noch einmal suchen!'}
-   };
-   scene.append(spot);
-  });
- }
- replay.onclick=()=>{round++;start()};start();cleanup=()=>{if(timer)clearTimeout(timer)};
+function flip(button,id,emoji){if(locked||button.disabled||button===first?.button||panel.hidden===false||celebration.hidden===false)return;button.classList.add('is-open');button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',emoji);note(480,.12);if(!first){first={button,id};return}second={button,id};locked=true;
+ if(first.id===second.id){first.button.classList.add('is-matched');second.button.classList.add('is-matched');first.button.disabled=second.button.disabled=true;matched++;updateProgress();melody();status.textContent='Ein Paar gefunden';first=second=null;locked=false;if(matched===pairs){status.textContent='Alle Paare gefunden';winTimer=setTimeout(()=>{celebration.hidden=false;document.querySelector('#play-again').focus()},850)}}
+ else{status.textContent='Versuch es noch einmal';timer=setTimeout(()=>{for(const item of [first,second]){item.button.classList.remove('is-open');item.button.setAttribute('aria-pressed','false');item.button.setAttribute('aria-label','Verdeckte Karte')}first=second=null;locked=false;timer=null},1150)}
 }
-
-back.onclick=()=>show('home');parents.onclick=()=>{const answer=prompt('Elternbereich: Wie viel ist 4 + 3?');if(answer!==null&&answer.trim()==='7')show('settings')};show('home');if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
+function closeSettings(){panel.hidden=true;settingsButton.setAttribute('aria-expanded','false');settingsButton.focus()}
+settingsButton.onclick=()=>{panel.hidden=false;settingsButton.setAttribute('aria-expanded','true');closeButton.focus()};
+closeButton.onclick=closeSettings;panel.addEventListener('click',e=>{if(e.target===panel)closeSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)closeSettings()});
+document.querySelector('#restart').onclick=newGame;document.querySelector('#play-again').onclick=newGame;
+soundInput.onchange=()=>{sound=soundInput.checked;try{localStorage.setItem('tier-memory-sound',String(sound))}catch{}};
+for(const n of [2,3,4,6]){const b=document.createElement('button');b.textContent=n+' Paare';b.dataset.n=String(n);b.onclick=()=>{pairs=n;try{localStorage.setItem('tier-memory-pairs',String(n))}catch{};levels.querySelectorAll('button').forEach(x=>x.classList.toggle('selected',x===b));newGame();closeSettings()};levels.append(b)}
+levels.querySelector('[data-n="'+pairs+'"]').classList.add('selected');newGame();
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
