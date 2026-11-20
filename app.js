@@ -65,6 +65,38 @@ function feed(){const [play,status]=shell('Tiere füttern','Gib dem Tier sein Li
 
 function zoo(){const [play,status]=shell('Unser Tierpark','Entdecke die Tiere und ihre Überraschungen!');play.className='zoo-grid';play.setAttribute('aria-label','Interaktiver Tierpark');const animals=[['🦁','Löwe',180],['🐘','Elefant',115],['🦒','Giraffe',360],['🐒','Affe',520],['🐧','Pinguin',460],['🦓','Zebra',310],['🐢','Schildkröte',260],['🦜','Papagei',650]];animals.forEach(([emoji,name,freq],i)=>{const b=item(emoji,name,()=>{tone(freq,.25,'triangle');tone(freq*1.25,.2,'sine',.15);status.textContent=name+' sagt Hallo!';const art=b.querySelector('.art');art.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-22px) rotate(-9deg)'},{transform:'translateY(0) rotate(0)'}],{duration:650,easing:'ease-in-out'});const r=b.getBoundingClientRect();spark(r.x+r.width/2,r.y+r.height/2)});b.style.setProperty('--zoo-hue',String(i*38));b.classList.add('zoo-animal');play.append(b)});status.textContent='Tippe ein Tier an!'}
 function puzzle(){const [play,status]=shell('Tierpuzzle','Ziehe die Teile auf die passenden Plätze!');const animals=['🐶','🐱','🐮','🐸','🦊','🐼'];let round=0,placed=0,drag=null;const target=document.createElement('div');target.className='puzzle-targets';const tray=document.createElement('div');tray.className='puzzle-tray';play.append(target,tray);function start(){placed=0;play.querySelectorAll('.action').forEach(b=>b.remove());target.replaceChildren();tray.replaceChildren();const chosen=shuffle(animals).slice(0,3);const slots=new Map();chosen.forEach((emoji,i)=>{const slot=document.createElement('button');slot.className='puzzle-slot';slot.textContent='?';slot.setAttribute('aria-label','Platz für '+emoji);slot.dataset.id=emoji;slot.onclick=()=>{if(drag)place(slot,drag)};target.append(slot);slots.set(emoji,slot)});shuffle(chosen).forEach(emoji=>{const piece=document.createElement('button');piece.className='puzzle-piece';piece.textContent=emoji;piece.setAttribute('aria-label','Puzzleteil '+emoji);piece.draggable=true;piece.addEventListener('dragstart',e=>{drag=emoji;e.dataTransfer?.setData('text/plain',emoji)});piece.onclick=()=>{drag=emoji;status.textContent='Tippe jetzt auf das passende Fragezeichen!'};piece.addEventListener('pointerdown',e=>{drag=emoji;piece.setPointerCapture(e.pointerId);piece.classList.add('dragging')});piece.addEventListener('pointermove',e=>{if(!piece.hasPointerCapture(e.pointerId))return;const rect=tray.getBoundingClientRect();piece.style.transform='translate('+(e.clientX-(rect.left+rect.width/2))*.22+'px,'+(e.clientY-(rect.top+rect.height/2))*.22+'px)'});piece.addEventListener('pointerup',e=>{piece.releasePointerCapture(e.pointerId);piece.classList.remove('dragging');piece.style.transform='';const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('.puzzle-slot');if(under)place(under,emoji)});piece.addEventListener('pointercancel',()=>{piece.classList.remove('dragging');piece.style.transform='' });tray.append(piece)});target.querySelectorAll('.puzzle-slot').forEach(slot=>{slot.addEventListener('dragover',e=>e.preventDefault());slot.addEventListener('drop',e=>{e.preventDefault();place(slot,e.dataTransfer?.getData('text/plain')||drag)})});status.textContent='Wähle ein Tier und finde seinen Platz!';function place(slot,emoji){if(slot.dataset.done||!emoji)return;if(slot.dataset.id!==emoji){tone(240,.14);status.textContent='Versuch einen anderen Platz!';return}slot.textContent=emoji;slot.dataset.done='1';slot.classList.add('solved');const piece=[...tray.children].find(p=>p.textContent===emoji);if(piece)piece.remove();drag=null;placed++;success();if(placed===3){status.textContent='Geschafft! Ein neues Puzzle kommt!';const btn=document.createElement('button');btn.className='action';btn.textContent='Neues Puzzle';btn.onclick=()=>{btn.remove();start()};play.append(btn)}else status.textContent='Super! Weiter so!'}}start()}
-function hideSeek(){const [play,status]=shell('Versteckspiel','Wo hat sich das Tier versteckt?');play.className='hide-scene';const spots=[['🌳','Baum'],['🏠','Haus'],['🌼','Blumen'],['🪨','Stein'],['🌾','Wiese'],['🧺','Korb']];const animals=['🐰','🐱','🐶','🐸','🐥'];let round=0,found=false;function start(){found=false;play.replaceChildren();const goal=animals[round%animals.length],index=Math.floor(Math.random()*spots.length);status.textContent='Finde das versteckte Tier!';spots.forEach(([emoji,name],i)=>{const b=document.createElement('button');b.className='hide-spot';b.innerHTML='<span aria-hidden="true">'+emoji+'</span><small>'+name+'</small>';b.setAttribute('aria-label',name+' untersuchen');b.onclick=()=>{if(found)return;if(i===index){found=true;b.querySelector('span').textContent=goal;success();spark();status.textContent='Gefunden!';const next=document.createElement('button');next.className='action';next.textContent='Noch einmal';next.onclick=()=>{round++;start()};play.append(next)}else{tone(300,.13);b.classList.add('checked');status.textContent='Hier ist es nicht. Such weiter!'}};play.append(b)})}start()}
+function hideSeek(){
+ const [play,status]=shell('Versteckspiel','Tippe auf die Verstecke!');
+ play.className='hide-scene hide-world';status.classList.add('visually-hidden');
+ const animals=[['🐥','Küken'],['🐷','Schwein'],['🐰','Hase'],['🐮','Kuh'],['🐶','Hund']];
+ const spots=[['tree','🌳','Baum'],['barn','🏠','Stall'],['flowers','🌼','Blumen'],['bush','🌿','Busch'],['hay','🌾','Heu'],['basket','🧺','Korb']];
+ const top=document.createElement('div');top.className='hide-target';play.append(top);
+ const scene=document.createElement('div');scene.className='hide-landscape';play.append(scene);
+ const bottom=document.createElement('div');bottom.className='hide-controls';play.append(bottom);
+ const replay=document.createElement('button');replay.className='hide-replay';replay.textContent='↻';replay.setAttribute('aria-label','Neues Versteckspiel');bottom.append(replay);
+ let round=0,found=false,timer=null;
+ function start(){
+  if(timer)clearTimeout(timer);found=false;scene.replaceChildren();
+  const [animal,name]=animals[round%animals.length],index=Math.floor(Math.random()*spots.length);
+  top.replaceChildren();const portrait=document.createElement('span');portrait.textContent=animal;portrait.setAttribute('aria-label','Suche '+name);top.append(portrait);
+  status.textContent='Suche '+name;
+  spots.forEach(([kind,emoji,label],i)=>{
+   const spot=document.createElement('button');spot.className='hide-object hide-'+kind;
+   spot.setAttribute('aria-label',label+' durchsuchen');
+   const art=document.createElement('span');art.className='hide-object-art';art.textContent=emoji;art.setAttribute('aria-hidden','true');spot.append(art);
+   spot.onclick=()=>{
+    if(found||spot.classList.contains('checked'))return;
+    if(i===index){
+     found=true;spot.classList.add('found');art.textContent=animal;portrait.textContent='★';success();
+     const rect=spot.getBoundingClientRect();spark(rect.x+rect.width/2,rect.y+rect.height/2);
+     status.textContent=name+' gefunden!';
+     timer=setTimeout(()=>{round++;start()},1800);
+    }else{spot.classList.add('checked');tone(300,.12,'sine');status.textContent='Noch einmal suchen!'}
+   };
+   scene.append(spot);
+  });
+ }
+ replay.onclick=()=>{round++;start()};start();cleanup=()=>{if(timer)clearTimeout(timer)};
+}
 
 back.onclick=()=>show('home');parents.onclick=()=>{const answer=prompt('Elternbereich: Wie viel ist 4 + 3?');if(answer!==null&&answer.trim()==='7')show('settings')};show('home');if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
