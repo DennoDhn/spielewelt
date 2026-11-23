@@ -31,10 +31,17 @@ module.exports = async function checkPuzzle(page) {
         assert.equal(await frame.locator('.placed').count(),0);
         await page.mouse.move(coords.sx,coords.sy);await page.mouse.down();
       }
+      // Capture transfer from a child must not cancel the stage's active drag.
+      await frame.locator('[data-piece="'+i+'"] path').first().evaluate(node=>{
+        node.dispatchEvent(new PointerEvent('lostpointercapture',{bubbles:true,pointerId:1}));
+      });
       await page.mouse.move(coords.tx,coords.ty);
       await page.mouse.up();
       assert.equal(await frame.locator('.placed').count(),i+1);
       if(i===0){
+        await settings.click();
+        await frame.locator('#play').click();
+        assert.equal(await frame.locator('.placed').count(),1,'same settings preserve progress');
         await frame.locator('#back').click();
         assert.deepEqual(await memory.evaluateAll(nodes=>nodes.map(node=>node.dataset.animal)),original);
         assert.equal(await page.locator('.tile.flipped').count(),1);
