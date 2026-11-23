@@ -7,6 +7,9 @@ on:
 jobs:
   chromium:
     runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -14,10 +17,10 @@ jobs:
         with:
           node-version: '22'
       - name: Check JavaScript syntax
-        run: node --check kids.js
+        run: node --check kids.js && node --check puzzle.js && node --check switch-game.js
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.56.1
-          npx playwright install --with-deps chromium webkit
+          python3 --version
       - name: Test Chromium, WebKit, offline and blocked storage
         run: node tests/kids-smoke.cjs
