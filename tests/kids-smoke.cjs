@@ -13,6 +13,7 @@ const { spawn } = require('node:child_process');
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
    assert.equal(await page.locator('.tile').count(),4,'four cards at start');
+   if(engine===chromium && size.width===390){await require('./puzzle-touch.cjs')(page);await page.reload();}
    if(size.width===390 || size.width===1180){await require('./puzzle-check.cjs')(page);await page.reload();}
    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.tile')).touchAction),'none','card touch gestures disabled');
    assert.equal(await page.evaluate(()=>getComputedStyle(document.body).touchAction),'none','page touch gestures disabled');

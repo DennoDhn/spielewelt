@@ -1,4 +1,4 @@
-const CACHE='spielewelt-memory-v3';
+const CACHE='spielewelt-memory-v4';
 const ASSETS=['./','./index.html','./kids.css','./kids.js','./manifest.webmanifest','./icon.svg','./switch-game.js','./puzzle.html','./puzzle.js','./puzzle.css','./koppel.svg','./waldbach.svg','./blumengarten.svg'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('spielewelt-memory-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()]))});

@@ -115,7 +115,14 @@ function interrupt(){cancelDrag();fingers.clear();}
 document.addEventListener('pointerdown',e=>{fingers.add(e.pointerId);if(fingers.size>1)cancelDrag();},true);
 document.addEventListener('pointerup',e=>{end(e);fingers.delete(e.pointerId);},true);
 document.addEventListener('pointercancel',e=>{cancelDrag();fingers.delete(e.pointerId);},true);
-stage.onpointermove=move;stage.onlostpointercapture=e=>{if(drag?.id===e.pointerId)cancelDrag();};
+stage.onpointermove=move;
+stage.onlostpointercapture=e=>{
+  // Child elements can lose implicit touch capture when the stage takes over.
+  if(e.target===stage && drag?.id===e.pointerId){
+    fingers.delete(e.pointerId);
+    cancelDrag();
+  }
+};
 window.addEventListener('blur',interrupt);
 document.addEventListener('visibilitychange',interrupt);
 for(const name of ['gesturestart','gesturechange','gestureend'])document.addEventListener(name,e=>e.preventDefault(),{passive:false});
@@ -136,5 +143,9 @@ for(const n of [6,9]){
   const b=document.createElement('button');b.textContent=n;b.onclick=()=>{difficulty=n;selectOptions();};$('#levels').append(b);
 }
 $('#settings').onclick=()=>{interrupt();choice=scene;difficulty=count;selectOptions();$('dialog').showModal();};
-$('#play').onclick=()=>{scene=choice;count=difficulty;$('dialog').close();reset();};
+$('#play').onclick=()=>{
+  $('dialog').close();
+  if(scene===choice && count===difficulty)return;
+  scene=choice;count=difficulty;reset();
+};
 reset();
