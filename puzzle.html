@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Bilderpuzzle</title><link rel="stylesheet" href="puzzle.css"><script defer src="puzzle.js"></script></head>
+<body><header><button id="back" aria-label="Zum Tier-Memory">🃏</button><strong>Bilderpuzzle</strong><button id="settings" aria-label="Motiv und Teile wählen">⚙</button></header>
+<svg id="stage" role="group" aria-label="Puzzlefläche und Teileablage" xmlns="http://www.w3.org/2000/svg"></svg>
+<footer><button id="preview" aria-label="Bildvorschau" aria-pressed="false">👁</button><output id="score" aria-live="polite"></output><button id="next" hidden>Nächstes Bild →</button></footer>
+<dialog><form method="dialog"><button aria-label="Schließen">✕</button></form><h2>Dein Bilderpuzzle</h2><div id="scenes"></div><h3>Wie viele Teile?</h3><div id="levels"></div><button id="play">Spielen ▸</button></dialog></body></html>
